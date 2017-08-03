@@ -9,6 +9,7 @@ Also for making a weatherstation this can be used together with a BMP280 for ins
 
 Used sources / inspirations:
 https://github.com/embeddedadventures/MOD-1016
+https://diyprojects.io/esp-easy-develop-plugins/#.WYLinYiGNaQ
 
 
 
