@@ -6,7 +6,7 @@
 
 // IN PROGRESS EVERYTHING BELOW IS NOT FINISHED and are COPIED BITS AND PIECES
 
-+  #include <Wire.h>
+  #include <Wire.h>
 +  #include <SPI.h>
   #include <SoftwareSerial.h>
   #include <AS3935.h>
@@ -57,6 +57,7 @@
 
   volatile bool detected = false;
 
+    //I2C -> SDA/SCL = IO5/IO4
 
   boolean Plugin_214(byte function, struct EventStruct *event, String& string)
   {
@@ -100,33 +101,27 @@
           addLog(LOG_LEVEL_INFO, (char*)"INIT : MOD-1016 (AS3935) Lightning Sensor");
           //I2C
           Wire.begin();
+          delay(2);
           mod1016.init(IRQ_PIN);
-          //SPI
-          //SPI.begin();
-          //mod1016.init(IRQ_PIN, CS_PIN);
-
+          delay(2);
           //Tune Caps, Set AFE, Set Noise Floor
           autoTuneCaps(IRQ_PIN);
 
           //mod1016.setTuneCaps(7);
+          delay(2);
           mod1016.setOutdoors();
+          delay(2);
           mod1016.setNoiseFloor(5);
-          String log = F("TUNE\tIN/OUT\tNOISEFLOOR");
-          log += "\n";
-          Hex TUNE = mod1016.getTuneCaps();
-          Bin IN_OUT = mod1016.getAFE();
-          Hex NOISEFLOOR = mod1016.getNoiseFloor();
-          log += F(TUNE "\t" IN_OUT "\t" NOISEFLOOR "\n");
 
-          if debug {
-            Serial.println("TUNE\tIN/OUT\tNOISEFLOOR");
-            Serial.print(mod1016.getTuneCaps(), HEX);
-            Serial.print("\t");
-            Serial.print(mod1016.getAFE(), BIN);
-            Serial.print("\t");
-            Serial.println(mod1016.getNoiseFloor(), HEX);
-            Serial.print("\n");
-          }
+          String log = F("TUNE\tIN/OUT\tNOISEFLOOR");
+          log += F("\n");
+          log += F(mod1016.getTuneCaps(), HEX);
+          log += F("\t");
+          log += F(mod1016.getAFE(), BIN);
+          log += F("\t");
+          log += F(mod1016.getNoiseFloor(), HEX);
+          log += F()"\n");
+          addLog(LOG_LEVEL_INFO, log);
 
           pinMode(IRQ_PIN, INPUT);
           attachInterrupt(digitalPinToInterrupt(IRQ_PIN), alert, RISING);
@@ -136,7 +131,7 @@
           success = true;
           return success;
         };
-        
+
 CHANGE UP TO HERE
 
         void loop() {
