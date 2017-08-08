@@ -53,6 +53,7 @@
   #define IRQ_PIN 2
   #define CS_PIN 10
   #define MOD1016_ADDRESS          (0x03)  // default address (0x03 = datasheet)
+  #define debug true
 
   volatile bool detected = false;
 
@@ -115,34 +116,71 @@
           Hex TUNE = mod1016.getTuneCaps();
           Bin IN_OUT = mod1016.getAFE();
           Hex NOISEFLOOR = mod1016.getNoiseFloor();
-          log += TUNE "\t" IN_OUT "\t" NOISEFLOOR "\n";
+          log += F(TUNE "\t" IN_OUT "\t" NOISEFLOOR "\n");
+
+          if debug {
+            Serial.println("TUNE\tIN/OUT\tNOISEFLOOR");
+            Serial.print(mod1016.getTuneCaps(), HEX);
+            Serial.print("\t");
+            Serial.print(mod1016.getAFE(), BIN);
+            Serial.print("\t");
+            Serial.println(mod1016.getNoiseFloor(), HEX);
+            Serial.print("\n");
+          }
 
           pinMode(IRQ_PIN, INPUT);
           attachInterrupt(digitalPinToInterrupt(IRQ_PIN), alert, RISING);
           mod1016.getIRQ();
           log += "after interrupt";
+          addLog(LOG_LEVEL_INFO, log);
+          success = true;
+          return success;
+        };
+        
+CHANGE UP TO HERE
+
+        void loop() {
+          if (detected) {
+            translateIRQ(mod1016.getIRQ());
+            detected = false;
+          }
+        };
+
+        void alert() {
+          detected = true;
+        };
+
+        void translateIRQ(uns8 irq) {
+          switch(irq) {
+              case 1:
+                Serial.println("NOISE DETECTED");
+                break;
+              case 4:
+                Serial.println("DISTURBER DETECTED");
+                break;
+              case 8:
+                Serial.println("LIGHTNING DETECTED");
+                printDistance();
+                break;
+            }
+        };
+
+        void printDistance() {
+          int distance = mod1016.calculateDistance();
+          if (distance == -1)
+            Serial.println("Lightning out of range");
+          else if (distance == 1)
+            Serial.println("Distance not in table");
+          else if (distance == 0)
+            Serial.println("Lightning overhead");
+          else {
+            Serial.print("Lightning ~");
+            Serial.print(distance);
+            Serial.println("km away\n");
+          }
+        };
 
 
- +        addLog(LOG_LEVEL_INFO, (char*)"INIT : SRF01");
- +        Plugin_100_SRF_Pin = Settings.TaskDevicePin1[event->TaskIndex];
- +        Plugin_100_SRF = new SoftwareSerial(Plugin_100_SRF_Pin, Plugin_100_SRF_Pin);
- +        Plugin_100_SRF01_Cmd(PLUGIN_100_srfAddress, PLUGIN_100_getSoft);
- +        for (timeout = 0; timeout < 10; timeout++) {
- +          if (Plugin_100_SRF->available() < 1 ) {
- +            delay(10);
- +          } else {
- +            int softVer = Plugin_100_SRF->read();
- +            String log = F("SRF01 : Firmware-Version: ");
- +            log += softVer;
- +            addLog(LOG_LEVEL_INFO, log);
- +            success = true;
- +            return success;
- +          };
- +        };
- +        addLog(LOG_LEVEL_ERROR, (char*)"SRF01-Init: protocol timeout!");
- +        success = false;
- +        break;
- +      }
  +
  +    case PLUGIN_READ:
  +      {
